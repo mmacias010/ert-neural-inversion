@@ -1,0 +1,49 @@
+#!/bin/bash
+# ---------------------------------------------------------------------------
+# Argon SGE batch job: capacity/hyperparameter disentangling.
+#
+#   probe -> tune -> eval, run as one chain so the probe's recommended budget
+#   feeds the stages that depend on it.
+#
+# Submit from /Users/mmcs/deepert on a LOGIN node:
+#     qsub run_retune.job
+# ---------------------------------------------------------------------------
+
+#$ -N inr_retune
+#$ -q UI
+#$ -pe smp 40
+#$ -cwd
+#$ -j y
+#$ -o logs/$JOB_NAME.$JOB_ID.log
+#$ -l h_rt=8:00:00
+#      generous: the probe runs up to 6000 iterations per fit, so this stage
+#      is the longest in the study so far.
+
+set -euo pipefail
+
+echo "host      : $(hostname)"
+echo "started   : $(date)"
+echo "job id    : ${JOB_ID:-none}"
+echo "slots     : ${NSLOTS:-1}"
+echo
+
+export OMP_NUM_THREADS=1
+export MKL_NUM_THREADS=1
+export OPENBLAS_NUM_THREADS=1
+export NUMEXPR_NUM_THREADS=1
+
+PY=.venv/bin/python
+
+echo "== environment check =="
+$PY -c "import numpy, scipy, torch; print('numpy', numpy.__version__, '| scipy', scipy.__version__, '| torch', torch.__version__)"
+echo
+
+echo "== regression gate =="
+$PY step0_regression.py
+echo
+
+echo "== capacity retune: probe -> tune -> eval =="
+$PY capacity_retune.py all "${NSLOTS:-4}"
+echo
+
+echo "finished  : $(date)"

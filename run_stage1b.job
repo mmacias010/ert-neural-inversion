@@ -1,0 +1,49 @@
+#!/bin/bash
+# ---------------------------------------------------------------------------
+# Argon SGE batch job: Stage 1b -- per-architecture settings, correct ordering.
+#
+#   probe -> capacity -> tune -> eval -> conventional, chained so no stage
+#   inherits a setting a later stage is meant to determine.
+#
+# Submit from /Users/mmcs/deepert on a LOGIN node:
+#     qsub run_stage1b.job
+# ---------------------------------------------------------------------------
+
+#$ -N inr_stage1b
+#$ -q UI
+#$ -pe smp 40
+#$ -cwd
+#$ -j y
+#$ -o logs/$JOB_NAME.$JOB_ID.log
+#$ -l h_rt=10:00:00
+#      287 neural runs, the probe at 12000 iterations. ~2.5-3 h expected;
+#      the limit is generous so a slow queue cannot truncate the chain.
+
+set -euo pipefail
+
+echo "host    : $(hostname)"
+echo "started : $(date)"
+echo "job id  : ${JOB_ID:-none}"
+echo "slots   : ${NSLOTS:-1}"
+echo
+
+export OMP_NUM_THREADS=1
+export MKL_NUM_THREADS=1
+export OPENBLAS_NUM_THREADS=1
+export NUMEXPR_NUM_THREADS=1
+
+PY=.venv/bin/python
+
+echo "== environment =="
+$PY -c "import numpy, scipy, torch; print('numpy', numpy.__version__, '| scipy', scipy.__version__, '| torch', torch.__version__)"
+echo
+
+echo "== regression gate =="
+$PY step0_regression.py
+echo
+
+echo "== stage 1b =="
+$PY stage1b.py all "${NSLOTS:-4}"
+echo
+
+echo "finished: $(date)"

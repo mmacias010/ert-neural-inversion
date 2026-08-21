@@ -1,0 +1,34 @@
+#!/bin/bash
+# ---------------------------------------------------------------------------
+# Argon SGE batch job: poster figure + geometry metrics at the re-tuned config.
+#
+# Submit from /Users/mmcs/deepert on a LOGIN node:
+#     qsub run_poster.job
+# ---------------------------------------------------------------------------
+
+#$ -N inr_poster
+#$ -q UI
+#$ -pe smp 40
+#      30 runs, so all fit in one wave; the longest is a single 8000-iteration
+#      Fourier fit at 527k parameters (~15 min).
+#$ -cwd
+#$ -j y
+#$ -o logs/$JOB_NAME.$JOB_ID.log
+#$ -l h_rt=2:00:00
+
+set -euo pipefail
+
+echo "host    : $(hostname)"
+echo "started : $(date)"
+echo "slots   : ${NSLOTS:-1}"
+echo
+
+export OMP_NUM_THREADS=1
+export MKL_NUM_THREADS=1
+export OPENBLAS_NUM_THREADS=1
+export NUMEXPR_NUM_THREADS=1
+
+.venv/bin/python poster_figure.py "${NSLOTS:-4}"
+
+echo
+echo "finished: $(date)"

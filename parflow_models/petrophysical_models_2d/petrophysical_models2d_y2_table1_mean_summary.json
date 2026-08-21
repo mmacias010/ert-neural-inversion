@@ -1,0 +1,46 @@
+{
+  "input_dir": "/home/luffy/deepertv1/parflow_models",
+  "output_dir": "/home/luffy/deepertv1/parflow_models/petrophysical_models_2d",
+  "y_index": 2,
+  "shape": [
+    25,
+    50
+  ],
+  "fixed_preset": "table1_mean",
+  "range_preset": null,
+  "porosity_source_file": "/home/luffy/deepertv1/parflow_models/sc2d_6.out.porosity.pfb",
+  "porosity_source": "parflow_pfb_slice",
+  "note": "Variation ranges are from Table 1 mean value and variation range when range_preset=table1_range. Range used in MC is not used in this configuration. phi2d is always read from porosity_file, not from preset porosity values.",
+  "base_parameters": {
+    "1": {
+      "name": "regolith",
+      "rho_sat": 170.0,
+      "rho_sat_s": 510.0,
+      "n": 2.2,
+      "porosity": 0.4
+    },
+    "2": {
+      "name": "fractured_bedrock",
+      "rho_sat": 1100.0,
+      "rho_sat_s": null,
+      "n": 1.8,
+      "porosity": 0.18
+    },
+    "3": {
+      "name": "fresh_bedrock",
+      "rho_sat": 2400.0,
+      "rho_sat_s": null,
+      "n": 2.5,
+      "porosity": 0.05
+    }
+  },
+  "variation_ranges": null,
+  "files": {
+    "class2d_y2": "/home/luffy/deepertv1/parflow_models/petrophysical_models_2d/class2d_y2.npy",
+    "rho_sat2d_y2_base_table1_mean": "/home/luffy/deepertv1/parflow_models/petrophysical_models_2d/rho_sat2d_y2_base_table1_mean.npy",
+    "rho_sat_s2d_y2_base_table1_mean": "/home/luffy/deepertv1/parflow_models/petrophysical_models_2d/rho_sat_s2d_y2_base_table1_mean.npy",
+    "n2d_y2_base_table1_mean": "/home/luffy/deepertv1/parflow_models/petrophysical_models_2d/n2d_y2_base_table1_mean.npy",
+    "phi2d_y2_base_table1_mean": "/home/luffy/deepertv1/parflow_models/petrophysical_models_2d/phi2d_y2_base_table1_mean.npy",
+    "bundle_npz": "/home/luffy/deepertv1/parflow_models/petrophysical_models_2d/petrophysical_models2d_y2_table1_mean.npz"
+  }
+}

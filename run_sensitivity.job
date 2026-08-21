@@ -1,0 +1,81 @@
+#!/bin/bash
+# ---------------------------------------------------------------------------
+# Argon SGE batch job: Stage-1 sensitivity studies.
+#
+# Submit from ~/deepert with:      qsub run_sensitivity.job
+# Watch with:                      qstat -u $USER
+# Kill with:                       qdel <job-id>
+#
+# Every line starting with "#$" is an SGE directive, read before the shell
+# runs. Everything after them is an ordinary bash script.
+# ---------------------------------------------------------------------------
+
+#$ -N inr_sensitivity
+#      job name; shows in qstat and is used in the log filename below.
+
+#$ -q GEOPHYSICS
+#      queue. GEOPHYSICS has 80-core nodes and lists smp in its pe_list.
+#      Change to UI if the group queue is full.
+
+#$ -pe smp 40
+#      parallel environment "smp" = N cores on ONE node (shared memory), which
+#      is what a process pool needs. 40 = one full socket on these nodes;
+#      staying within a socket avoids cross-socket memory traffic, and this
+#      workload is memory-bandwidth sensitive.
+
+#$ -cwd
+#      run in the directory the job was submitted from (~/deepert), so the
+#      relative paths inr_results/ and deepert/ resolve.
+
+#$ -j y
+#      merge stderr into stdout, so one log holds everything.
+
+#$ -o logs/$JOB_NAME.$JOB_ID.log
+#      log file. The logs/ directory must exist BEFORE submitting or the job
+#      fails silently at scheduling time.
+
+#$ -l h_rt=8:00:00
+#      hard wall-clock limit. Generous: the studies should take well under an
+#      hour at 40 cores, but a limit prevents a hung job holding the node.
+
+# --------------------------- environment ----------------------------------
+# Compute nodes have a working environment; login nodes do not (their
+# libstdc++ is too old for numpy's C++ runtime). Batch jobs always land on
+# compute nodes, so no module load is needed -- verified by importing below.
+
+set -euo pipefail          # fail fast rather than producing partial results
+
+echo "host      : $(hostname)"
+echo "started   : $(date)"
+echo "job id    : ${JOB_ID:-none}"
+echo "slots     : ${NSLOTS:-1}"
+echo "directory : $(pwd)"
+echo
+
+# One thread per worker: the sparse solve is single-threaded and oversubscribing
+# makes parallel runs slower than serial. sensitivity.py sets these too, but
+# exporting here covers any child process.
+export OMP_NUM_THREADS=1
+export MKL_NUM_THREADS=1
+export OPENBLAS_NUM_THREADS=1
+export NUMEXPR_NUM_THREADS=1
+
+PY=.venv/bin/python
+
+echo "== environment check =="
+$PY -c "import numpy, scipy, torch; print('numpy', numpy.__version__, '| scipy', scipy.__version__, '| torch', torch.__version__)"
+echo
+
+echo "== regression (must pass before trusting any result) =="
+$PY step0_regression.py
+echo
+
+echo "== initialization sensitivity =="
+$PY sensitivity.py init "${NSLOTS:-4}"
+echo
+
+echo "== noise robustness =="
+$PY sensitivity.py noise "${NSLOTS:-4}"
+echo
+
+echo "finished  : $(date)"

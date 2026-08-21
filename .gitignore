@@ -1,0 +1,18 @@
+# Python
+__pycache__/
+*.py[oc]
+build/
+dist/
+wheels/
+*.egg-info
+
+# Environments
+.venv
+.cache
+
+# Scheduler logs
+logs/
+*.log
+
+# Field data -- group-owned, not redistributed
+*.xlsx

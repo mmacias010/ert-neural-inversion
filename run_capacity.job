@@ -1,0 +1,53 @@
+#!/bin/bash
+# ---------------------------------------------------------------------------
+# Argon SGE batch job: capacity sweep.
+#
+# Submit from /Users/mmcs/deepert on a LOGIN node (compute nodes cannot submit):
+#     qsub run_capacity.job
+# Watch:   qstat -u $USER    then    tail -f logs/inr_capacity.<job-id>.log
+# Kill:    qdel <job-id>
+# ---------------------------------------------------------------------------
+
+#$ -N inr_capacity
+#$ -q UI
+#      UI has many idle 80-core nodes. GEOPHYSICS has only two and is usually
+#      saturated by all.q or in alarm state.
+#$ -pe smp 40
+#      one full socket; this workload is memory-bandwidth sensitive, so
+#      spanning both sockets buys little.
+#$ -cwd
+#$ -j y
+#$ -o logs/$JOB_NAME.$JOB_ID.log
+#$ -l h_rt=4:00:00
+
+set -euo pipefail
+
+echo "host      : $(hostname)"
+echo "started   : $(date)"
+echo "job id    : ${JOB_ID:-none}"
+echo "slots     : ${NSLOTS:-1}"
+echo "directory : $(pwd)"
+echo
+
+# One thread per worker: the sparse FEM solve is single-threaded, and
+# oversubscribing makes parallel runs slower than serial.
+export OMP_NUM_THREADS=1
+export MKL_NUM_THREADS=1
+export OPENBLAS_NUM_THREADS=1
+export NUMEXPR_NUM_THREADS=1
+
+PY=.venv/bin/python
+
+echo "== environment check =="
+$PY -c "import numpy, scipy, torch; print('numpy', numpy.__version__, '| scipy', scipy.__version__, '| torch', torch.__version__)"
+echo
+
+echo "== regression gate =="
+$PY step0_regression.py
+echo
+
+echo "== capacity sweep =="
+$PY capacity_sweep.py "${NSLOTS:-4}"
+echo
+
+echo "finished  : $(date)"

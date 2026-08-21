@@ -1,0 +1,12 @@
+{
+  "src_dir": "D:\\Iowa paper\\time-lapsed ERT AD Inversion\\models_1year_1hour",
+  "dst_dir": "D:\\Iowa paper\\time-lapsed ERT AD Inversion\\models_1year_1day",
+  "interval": 24,
+  "total_files_in_src": 52611,
+  "series_groups": 9,
+  "static_files_kept": 48,
+  "series_files_total": 52563,
+  "series_files_kept": 2193,
+  "total_files_kept": 2241,
+  "files_copied_this_run": 2241
+}
